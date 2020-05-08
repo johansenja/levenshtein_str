@@ -1,5 +1,7 @@
 # String#levenshtein
 
+[![Gem Version](https://badge.fury.io/rb/levenshtein_str.svg)](https://badge.fury.io/rb/levenshtein_str)
+
 A performant Ruby gem for getting the [levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between 2 strings, with the leg work done in Crystal.
 
 ## Installation:
