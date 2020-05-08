@@ -36,13 +36,18 @@ class String
   end
 end
 
-def bm
+def setup
   load "Rakefile"
 
   Rake::Task["compile"].invoke
 
   require "benchmark/ips"
+  require "benchmark/memory"
   require "levenshtein_str"
+end
+
+def bm_ips
+  puts "\n\nBENCHMARKING IPS (iterations per second)\n\n\n"
 
   # blank strings
   Benchmark.ips do |bmark|
@@ -55,13 +60,6 @@ def bm
   Benchmark.ips do |bmark|
     bmark.report("abd vs abc (Ruby)") { 100_000.times { "abd".levenshtein_rb("abc") } }
     bmark.report("abd vs abc (Crystal)") { 100_000.times { "abd".levenshtein("abc") } }
-    bmark.compare!
-  end
-
-  # short diff
-  Benchmark.ips do |bmark|
-    bmark.report("abc vs abcde (Ruby)") { 100_000.times { "abc".levenshtein_rb("abcde") } }
-    bmark.report("abc vs abcde (Crystal)") { 100_000.times { "abc".levenshtein("abcde") } }
     bmark.compare!
   end
 
@@ -80,50 +78,69 @@ def bm
   end
 end
 
+def bm_memory
+  puts "\n\nBENCHMARKING MEMORY USAGE\n\n\n"
+
+  Benchmark.memory do |bmark|
+    bmark.report("Blank strings (Ruby)") { 100_000.times { "".levenshtein_rb("") } }
+    bmark.report("Blank string (Crystal)") { 100_000.times { "".levenshtein("") } }
+    bmark.compare!
+  end
+
+  Benchmark.memory do |bmark|
+    bmark.report("abd vs abc (Ruby)") { 100_000.times { "abd".levenshtein_rb("abc") } }
+    bmark.report("abd vs abc (Crystal)") { 100_000.times { "abd".levenshtein("abc") } }
+    bmark.compare!
+  end
+
+  Benchmark.memory do |bmark|
+    bmark.report("abcdefghi vs 0123456789 (Ruby)") { 100_000.times { "abcdefghi".levenshtein_rb("0123456789") } }
+    bmark.report("abcdefghi vs 0123456789 (Crystal)") { 100_000.times { "abcdefghi".levenshtein("0123456789") } }
+    bmark.compare!
+  end
+
+  Benchmark.memory do |bmark|
+    bmark.report("[whole alphabet] vs 012345 (Ruby)") { 100_000.times { "abcdefghijklmnopqrstuvwxyz".levenshtein_rb("012345") } }
+    bmark.report("[whole alphabet] vs 012345 (Crystal)") { 100_000.times { "abcdefghijklmnopqrstuvwxyz".levenshtein("012345") } }
+    bmark.compare!
+  end
+end
+
 begin
-  bm
+  setup
+  bm_ips
+  bm_memory
 ensure
   Rake::Task["clean"].invoke
 end
 
 # RESULTS
 
+# BENCHMARKING IPS (iterations per second)
+
 # Warming up --------------------------------------
-# Blank strings (Ruby)     3.000  i/100ms
+# Blank strings (Ruby)     4.000  i/100ms
 # Blank string (Crystal)
-#                          3.000  i/100ms
+#                          5.000  i/100ms
 # Calculating -------------------------------------
-# Blank strings (Ruby)     48.982  (±16.3%) i/s -    237.000  in   5.004116s
+# Blank strings (Ruby)     55.396  (± 1.8%) i/s -    280.000  in   5.056752s
 # Blank string (Crystal)
-#                          47.140  (±14.8%) i/s -    231.000  in   5.030098s
+#                          51.092  (± 2.0%) i/s -    260.000  in   5.090523s
 
 # Comparison:
-# Blank strings (Ruby):       49.0 i/s
-# Blank string (Crystal):       47.1 i/s - same-ish: difference falls within error
+# Blank strings (Ruby):       55.4 i/s
+# Blank string (Crystal):       51.1 i/s - 1.08x  (± 0.00) slower
 
 # Warming up --------------------------------------
 #    abd vs abc (Ruby)     1.000  i/100ms
 # abd vs abc (Crystal)     1.000  i/100ms
 # Calculating -------------------------------------
-#    abd vs abc (Ruby)      1.367  (± 0.0%) i/s -      7.000  in   5.123125s
-# abd vs abc (Crystal)      2.750  (± 0.0%) i/s -     14.000  in   5.101675s
+#    abd vs abc (Ruby)      1.510  (± 0.0%) i/s -      8.000  in   5.298484s
+# abd vs abc (Crystal)      2.951  (± 0.0%) i/s -     15.000  in   5.084644s
 
 # Comparison:
-# abd vs abc (Crystal):        2.7 i/s
-#    abd vs abc (Ruby):        1.4 i/s - 2.01x  (± 0.00) slower
-
-# Warming up --------------------------------------
-#  abc vs abcde (Ruby)     1.000  i/100ms
-# abc vs abcde (Crystal)
-#                          1.000  i/100ms
-# Calculating -------------------------------------
-#  abc vs abcde (Ruby)      0.901  (± 0.0%) i/s -      5.000  in   5.547298s
-# abc vs abcde (Crystal)
-#                           1.792  (± 0.0%) i/s -      9.000  in   5.023881s
-
-# Comparison:
-# abc vs abcde (Crystal):        1.8 i/s
-#  abc vs abcde (Ruby):        0.9 i/s - 1.99x  (± 0.00) slower
+# abd vs abc (Crystal):        3.0 i/s
+#    abd vs abc (Ruby):        1.5 i/s - 1.95x  (± 0.00) slower
 
 # Warming up --------------------------------------
 # abcdefghi vs 0123456789 (Ruby)
@@ -132,13 +149,13 @@ end
 #                          1.000  i/100ms
 # Calculating -------------------------------------
 # abcdefghi vs 0123456789 (Ruby)
-#                           0.196  (± 0.0%) i/s -      1.000  in   5.095124s
+#                           0.218  (± 0.0%) i/s -      2.000  in   9.178957s
 # abcdefghi vs 0123456789 (Crystal)
-#                           0.441  (± 0.0%) i/s -      3.000  in   6.804299s
+#                           0.475  (± 0.0%) i/s -      3.000  in   6.312027s
 
 # Comparison:
-# abcdefghi vs 0123456789 (Crystal):        0.4 i/s
-# abcdefghi vs 0123456789 (Ruby):        0.2 i/s - 2.25x  (± 0.00) slower
+# abcdefghi vs 0123456789 (Crystal):        0.5 i/s
+# abcdefghi vs 0123456789 (Ruby):        0.2 i/s - 2.18x  (± 0.00) slower
 
 # Warming up --------------------------------------
 # [whole alphabet] vs 012345 (Ruby)
@@ -147,10 +164,62 @@ end
 #                          1.000  i/100ms
 # Calculating -------------------------------------
 # [whole alphabet] vs 012345 (Ruby)
-#                           0.123  (± 0.0%) i/s -      1.000  in   8.150069s
+#                           0.136  (± 0.0%) i/s -      1.000  in   7.358898s
 # [whole alphabet] vs 012345 (Crystal)
-#                           0.291  (± 0.0%) i/s -      2.000  in   6.886041s
+#                           0.316  (± 0.0%) i/s -      2.000  in   6.324441s
 
 # Comparison:
 # [whole alphabet] vs 012345 (Crystal):        0.3 i/s
-# [whole alphabet] vs 012345 (Ruby):        0.1 i/s - 2.37x  (± 0.00) slower
+# [whole alphabet] vs 012345 (Ruby):        0.1 i/s - 2.33x  (± 0.00) slower
+
+# BENCHMARKING MEMORY USAGE
+
+# Calculating -------------------------------------
+# Blank strings (Ruby)     8.000M memsize (     0.000  retained)
+#                        200.000k objects (     0.000  retained)
+#                          1.000  strings (     0.000  retained)
+# Blank string (Crystal)
+#                          8.000M memsize (     0.000  retained)
+#                        200.000k objects (     0.000  retained)
+#                          1.000  strings (     0.000  retained)
+
+# Comparison:
+# Blank strings (Ruby):    8000000 allocated
+# Blank string (Crystal):    8000000 allocated - same
+# Calculating -------------------------------------
+#    abd vs abc (Ruby)   201.600M memsize (     0.000  retained)
+#                          4.000M objects (     0.000  retained)
+#                          6.000  strings (     0.000  retained)
+# abd vs abc (Crystal)     8.000M memsize (     0.000  retained)
+#                        200.000k objects (     0.000  retained)
+#                          2.000  strings (     0.000  retained)
+
+# Comparison:
+# abd vs abc (Crystal):    8000000 allocated
+#    abd vs abc (Ruby):  201600000 allocated - 25.20x more
+# Calculating -------------------------------------
+# abcdefghi vs 0123456789 (Ruby)
+#                          1.132B memsize (     0.000  retained)
+#                         23.700M objects (     0.000  retained)
+#                         21.000  strings (     0.000  retained)
+# abcdefghi vs 0123456789 (Crystal)
+#                          8.000M memsize (     0.000  retained)
+#                        200.000k objects (     0.000  retained)
+#                          2.000  strings (     0.000  retained)
+
+# Comparison:
+# abcdefghi vs 0123456789 (Crystal):    8000000 allocated
+# abcdefghi vs 0123456789 (Ruby): 1132000000 allocated - 141.50x more
+# Calculating -------------------------------------
+# [whole alphabet] vs 012345 (Ruby)
+#                          1.696B memsize (     0.000  retained)
+#                         34.900M objects (     0.000  retained)
+#                         34.000  strings (     0.000  retained)
+# [whole alphabet] vs 012345 (Crystal)
+#                          8.000M memsize (     0.000  retained)
+#                        200.000k objects (     0.000  retained)
+#                          2.000  strings (     0.000  retained)
+
+# Comparison:
+# [whole alphabet] vs 012345 (Crystal):    8000000 allocated
+# [whole alphabet] vs 012345 (Ruby): 1696000000 allocated - 212.00x more

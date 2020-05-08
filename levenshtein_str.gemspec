@@ -13,4 +13,5 @@ Gem::Specification.new do |s|
   s.metadata = { "source_code_uri" => "https://github.com/johansenja/levenshtein_str" }
   s.homepage = "https://github.com/johansenja/levenshtein_str"
   s.add_development_dependency "benchmark-ips", "~> 2.7"
+  s.add_development_dependency "benchmark-memory", "~> 0.1.2"
 end

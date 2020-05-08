@@ -33,15 +33,28 @@ then
 
 ## Benchmarks
 
-See benchmark.rb for more code info and full results.
+A pure Ruby implementation vs this crystal gem. See `./benchmark` file for full details. Run them with
 
-`./benchmark`
+```
+./benchmark
+```
+Note it takes a while to run the full set, especially the memory ones.
 
-- "" and "" Same-ish, sometimes Ruby fractionally quicker (no type conversion overheads)
+### Iterations Per Second
+
+- "" and "" Same-ish, often Ruby ~1.08x quicker (no type conversion overheads)
 - "abd" and "abc" Crystal ~2x quicker
-- "abc" and "abcde" Crystal ~2x quicker
 - "abcdefghi" and "0123456789" Crystal ~2.25x quicker
 - [whole alphabet] vs "012345" Crystal ~2.37x quicker
+
+### Memory
+
+- "" and "" Same
+- "abd" and "abc" Ruby 25.2x more
+- "abcdefghi" and "0123456789" Ruby 141.5x more
+- [whole alphabet] vs "012345" Ruby 212x more
+
+See `./benchmark` file for full detailed results.
 
 ## Template
 
