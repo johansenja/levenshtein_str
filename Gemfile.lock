@@ -1,17 +1,19 @@
 PATH
   remote: .
   specs:
-    crystal_gem_template (0.1.0)
+    levenshtein_str (0.1.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
+    benchmark-ips (2.8.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  crystal_gem_template!
+  benchmark-ips
+  levenshtein_str!
 
 BUNDLED WITH
-   1.17.3
+   2.1.4

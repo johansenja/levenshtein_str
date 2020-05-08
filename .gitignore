@@ -1,3 +1,4 @@
 *.bundle
+*.bundle.dwarf
 *.o
 ext/.shards/

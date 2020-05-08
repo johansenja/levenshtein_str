@@ -1,31 +1,60 @@
-# Crystal Gem Template
+# String#levenshtein
 
-A working demo Ruby gem, written in Crystal.
+A performant Ruby gem for getting the [levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) between 2 strings, with the leg work done in Crystal.
 
-## Usage:
+## Installation:
+
+### System Requirements
+
+- crystal
+- MacOS (untested in Linux)
 
 ```ruby
 # Gemfile
-gem "crystal_gem_template", git: "https://github.com/johansenja/crystal_gem_template.git"
+gem "levenshtein_str"
 ```
 
 then
 
 `bundle install`
 
-then
+## Usage:
 
 ```ruby
 # app.rb
-require 'crystal_gem_template'
+require 'levenshtein_str'
 
-include CrystalGemTemplate
-
-hello('world') # => "hello world"
+puts "hello".levenshtein("world")
 ```
 
 then
 
-`bundle exec ruby app.rb # => hello world`
+`ruby app.rb # => 4`
 
-Not a lot going on here, clearly, but this opens the door for performant code written in Crystal, then used in Ruby apps, going via Ruby's C API.
+## Benchmarks
+
+See benchmark.rb for more code info and full results.
+
+`./benchmark`
+
+- "" and "" Same-ish, sometimes Ruby fractionally quicker (no type conversion overheads)
+- "abd" and "abc" Crystal ~2x quicker
+- "abc" and "abcde" Crystal ~2x quicker
+- "abcdefghi" and "0123456789" Crystal ~2.25x quicker
+- [whole alphabet] vs "012345" Crystal ~2.37x quicker
+
+## Template
+
+Based on [this](https://github.com/johansenja/crystal_gem_template) template for writing Ruby gems in Crystal.
+
+## Contributions && Testing
+
+Testing for now can just be done using Ruby:
+
+`rspec`
+
+Contributions are welcome.
+
+## License
+
+[MIT](https://rem.mit-license.org)

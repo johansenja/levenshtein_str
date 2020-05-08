@@ -1,0 +1,156 @@
+#!/usr/bin/env ruby
+$: << File.dirname(__FILE__) + "/lib"
+
+# Aiming to mimic how the Crystal looks fairly closely, with a wrapper method,
+# and then a separate method for the logic
+
+def _levenshtein_rb(first, second)
+  len1, len2 = first.size, second.size
+  return len1 if len2.zero?
+  return len2 if len1.zero?
+
+  matrix = [(0..len1).to_a]
+  (1..len2).each do |j|
+    matrix << [j] + [0] * len1
+  end
+
+  (1..len2).each do |i|
+    (1..len1).each do |j|
+      if first[j - 1] == second[i - 1]
+        matrix[i][j] = matrix[i - 1][j - 1]
+      else
+        matrix[i][j] = [
+          matrix[i - 1][j],
+          matrix[i][j - 1],
+          matrix[i - 1][j - 1],
+        ].min + 1
+      end
+    end
+  end
+  return matrix.last.last
+end
+
+class String
+  def levenshtein_rb(second)
+    _levenshtein_rb(self, second)
+  end
+end
+
+def bm
+  load "Rakefile"
+
+  Rake::Task["compile"].invoke
+
+  require "benchmark/ips"
+  require "levenshtein_str"
+
+  # blank strings
+  Benchmark.ips do |bmark|
+    bmark.report("Blank strings (Ruby)") { 100_000.times { "".levenshtein_rb("") } }
+    bmark.report("Blank string (Crystal)") { 100_000.times { "".levenshtein("") } }
+    bmark.compare!
+  end
+
+  # 1 char diff
+  Benchmark.ips do |bmark|
+    bmark.report("abd vs abc (Ruby)") { 100_000.times { "abd".levenshtein_rb("abc") } }
+    bmark.report("abd vs abc (Crystal)") { 100_000.times { "abd".levenshtein("abc") } }
+    bmark.compare!
+  end
+
+  # short diff
+  Benchmark.ips do |bmark|
+    bmark.report("abc vs abcde (Ruby)") { 100_000.times { "abc".levenshtein_rb("abcde") } }
+    bmark.report("abc vs abcde (Crystal)") { 100_000.times { "abc".levenshtein("abcde") } }
+    bmark.compare!
+  end
+
+  # medium diff
+  Benchmark.ips do |bmark|
+    bmark.report("abcdefghi vs 0123456789 (Ruby)") { 100_000.times { "abcdefghi".levenshtein_rb("0123456789") } }
+    bmark.report("abcdefghi vs 0123456789 (Crystal)") { 100_000.times { "abcdefghi".levenshtein("0123456789") } }
+    bmark.compare!
+  end
+
+  # long diff
+  Benchmark.ips do |bmark|
+    bmark.report("[whole alphabet] vs 012345 (Ruby)") { 100_000.times { "abcdefghijklmnopqrstuvwxyz".levenshtein_rb("012345") } }
+    bmark.report("[whole alphabet] vs 012345 (Crystal)") { 100_000.times { "abcdefghijklmnopqrstuvwxyz".levenshtein("012345") } }
+    bmark.compare!
+  end
+end
+
+begin
+  bm
+ensure
+  Rake::Task["clean"].invoke
+end
+
+# RESULTS
+
+# Warming up --------------------------------------
+# Blank strings (Ruby)     3.000  i/100ms
+# Blank string (Crystal)
+#                          3.000  i/100ms
+# Calculating -------------------------------------
+# Blank strings (Ruby)     48.982  (±16.3%) i/s -    237.000  in   5.004116s
+# Blank string (Crystal)
+#                          47.140  (±14.8%) i/s -    231.000  in   5.030098s
+
+# Comparison:
+# Blank strings (Ruby):       49.0 i/s
+# Blank string (Crystal):       47.1 i/s - same-ish: difference falls within error
+
+# Warming up --------------------------------------
+#    abd vs abc (Ruby)     1.000  i/100ms
+# abd vs abc (Crystal)     1.000  i/100ms
+# Calculating -------------------------------------
+#    abd vs abc (Ruby)      1.367  (± 0.0%) i/s -      7.000  in   5.123125s
+# abd vs abc (Crystal)      2.750  (± 0.0%) i/s -     14.000  in   5.101675s
+
+# Comparison:
+# abd vs abc (Crystal):        2.7 i/s
+#    abd vs abc (Ruby):        1.4 i/s - 2.01x  (± 0.00) slower
+
+# Warming up --------------------------------------
+#  abc vs abcde (Ruby)     1.000  i/100ms
+# abc vs abcde (Crystal)
+#                          1.000  i/100ms
+# Calculating -------------------------------------
+#  abc vs abcde (Ruby)      0.901  (± 0.0%) i/s -      5.000  in   5.547298s
+# abc vs abcde (Crystal)
+#                           1.792  (± 0.0%) i/s -      9.000  in   5.023881s
+
+# Comparison:
+# abc vs abcde (Crystal):        1.8 i/s
+#  abc vs abcde (Ruby):        0.9 i/s - 1.99x  (± 0.00) slower
+
+# Warming up --------------------------------------
+# abcdefghi vs 0123456789 (Ruby)
+#                          1.000  i/100ms
+# abcdefghi vs 0123456789 (Crystal)
+#                          1.000  i/100ms
+# Calculating -------------------------------------
+# abcdefghi vs 0123456789 (Ruby)
+#                           0.196  (± 0.0%) i/s -      1.000  in   5.095124s
+# abcdefghi vs 0123456789 (Crystal)
+#                           0.441  (± 0.0%) i/s -      3.000  in   6.804299s
+
+# Comparison:
+# abcdefghi vs 0123456789 (Crystal):        0.4 i/s
+# abcdefghi vs 0123456789 (Ruby):        0.2 i/s - 2.25x  (± 0.00) slower
+
+# Warming up --------------------------------------
+# [whole alphabet] vs 012345 (Ruby)
+#                          1.000  i/100ms
+# [whole alphabet] vs 012345 (Crystal)
+#                          1.000  i/100ms
+# Calculating -------------------------------------
+# [whole alphabet] vs 012345 (Ruby)
+#                           0.123  (± 0.0%) i/s -      1.000  in   8.150069s
+# [whole alphabet] vs 012345 (Crystal)
+#                           0.291  (± 0.0%) i/s -      2.000  in   6.886041s
+
+# Comparison:
+# [whole alphabet] vs 012345 (Crystal):        0.3 i/s
+# [whole alphabet] vs 012345 (Ruby):        0.1 i/s - 2.37x  (± 0.00) slower

@@ -5,8 +5,8 @@ authors:
   - johansenja
 
 targets:
-  crystal_gem_template:
-    main: src/crystal_gem_template.cr
+  levenshtein_str:
+    main: src/levenshtein_str.cr
 #
 # add dependencies and development_dependencies:
 # dependencies:

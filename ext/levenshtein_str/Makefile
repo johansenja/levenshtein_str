@@ -1,5 +1,5 @@
 CRYSTAL = crystal
-TARGET = ../../lib/crystal_gem_template.bundle
+TARGET = ../../lib/levenshtein_str.bundle
 
 install: all
 
@@ -8,8 +8,8 @@ all: shards $(TARGET)
 shards:
 	shards
 
-$(TARGET): ./src/crystal_gem_template.cr
+$(TARGET): ./src/levenshtein_str.cr
 	$(CRYSTAL) $< --link-flags "-dynamic -bundle -Wl,-undefined,dynamic_lookup" -o $(TARGET)
 
 clean:
-	rm -f *.bundle
+	rm -f ../../**/*.bundle*
